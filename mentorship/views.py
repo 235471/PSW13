@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
-from mentorship.auth import validate_token
+# validate_token is now primarily used within decorators
+# from mentorship.auth import validate_token 
 from mentorship.models import Mentorship
 from .models import AppointmentAvailability, Meeting, Mentorship, Navigator, Task, Upload
+# Import the new decorators
+from .decorators import mentee_token_required, mentor_owns_mentee_required, task_status_checks_required 
 from django.contrib import messages
 from django.contrib.messages import constants
 from django.db import transaction
@@ -93,22 +96,15 @@ def auth(request):
         except Mentorship.DoesNotExist:
             messages.add_message(request, constants.ERROR, 'Invalid token')
             return redirect('auth_mentee')
-        
+
+@mentee_token_required # Apply decorator
 def available_dates(request):
-    token = request.COOKIES.get('auth_token')
-
-    if not token:
-        messages.add_message(request, constants.ERROR, 'Please inform your access token.')
-        return redirect('auth_mentee')       
-
-    mentee = validate_token(token)
-    if not mentee:
-        messages.add_message(request, constants.ERROR, 'Invalid token')
-        return redirect('auth_mentee')    
+    # Token validation and mentee fetching (into request.mentee) handled by decorator
+    mentee = request.mentee # Access mentee from request object
 
     if request.method == 'GET':
         availability_queryset = AppointmentAvailability.objects.filter(
-            mentor=mentee.user,
+            mentor=mentee.user, # Use mentee from request
             appointment_date__gte=datetime.now(), 
             scheduled=False
         ).values('id', 'appointment_date')
@@ -135,18 +131,11 @@ def available_dates(request):
             })
         
         return render(request, 'available_dates.html', {'availability': availability_formatted})
-    
+
+@mentee_token_required # Apply decorator
 def schedule_meeting(request):
-    token = request.COOKIES.get('auth_token')
-
-    if not token:
-        messages.add_message(request, constants.ERROR, 'Please inform your access token.')
-        return redirect('auth_mentee')       
-
-    mentee = validate_token(token)
-    if not mentee:
-        messages.add_message(request, constants.ERROR, 'Invalid token')
-        return redirect('auth_mentee')    
+    # Token validation and mentee fetching (into request.mentee) handled by decorator
+    mentee = request.mentee # Access mentee from request object
 
     if request.method == 'GET':
         date = request.GET.get('date')
@@ -154,7 +143,7 @@ def schedule_meeting(request):
         date = datetime.strptime(date, '%d-%m-%Y')
 
         hours = AppointmentAvailability.objects.filter(
-            mentor=mentee.user,
+            mentor=mentee.user, # Use mentee from request
             appointment_date__gte=date,
             appointment_date__lt=date + timedelta(days=1),
             scheduled=False
@@ -168,7 +157,8 @@ def schedule_meeting(request):
         with transaction.atomic():
             availability = AppointmentAvailability.objects.get(id=hour_id)
             
-            if availability.mentor != mentee.user:
+            # Check if the mentor of the availability slot matches the user associated with the validated mentee token
+            if availability.mentor != mentee.user: # Use mentee from request
                 messages.add_message(request, constants.ERROR, 'You cannot schedule meetings with this mentor')
                 return redirect('available_dates')
             
@@ -176,7 +166,7 @@ def schedule_meeting(request):
                 date=availability,
                 tag=tag,
                 description=description,
-                mentee=mentee
+                mentee=mentee # Use mentee from request
             )
 
             meeting.save()
@@ -186,79 +176,58 @@ def schedule_meeting(request):
         messages.add_message(request, constants.SUCCESS, 'Meeting scheduled successfully')
         return redirect('available_dates')
 
-@login_required    
+# Apply decorator (replaces @login_required and ownership check)
+@mentor_owns_mentee_required 
 def task(request , id):
-    mentee = Mentorship.objects.get(id=id)
-    if mentee.user != request.user:
-        raise Http404('You are not authorized to access this page.')
+    # Login check, mentee fetching (into request.mentee), and ownership check handled by decorator
+    mentee = request.mentee # Access mentee from request object
     
     if request.method == 'GET':
-        tasks = Task.objects.filter(mentee=mentee)
-        videos = Upload.objects.filter(mentee=mentee)
+        tasks = Task.objects.filter(mentee=mentee) # Use mentee from request
+        videos = Upload.objects.filter(mentee=mentee) # Use mentee from request
         return render(request, 'task.html', { 'mentee': mentee, 'tasks': tasks, 'videos': videos })
     
     elif request.method == 'POST':
-        task = request.POST.get('task')
-        task = Task(
-            task=task,
-            mentee=mentee,
+        task_description = request.POST.get('task') # Renamed variable
+        new_task = Task( # Renamed variable
+            task=task_description,
+            mentee=mentee, # Use mentee from request
         )
-        task.save()
+        new_task.save()
         messages.add_message(request, constants.SUCCESS, 'Task registered successfully')
-        return redirect(f'/mentorship/task/{mentee.id}')                    
+        return redirect(f'/mentorship/task/{mentee.id}') # Use mentee from request
 
-@login_required
+# Apply decorator (replaces @login_required and ownership check)
+@mentor_owns_mentee_required
 def upload(request, id):
-    mentee = Mentorship.objects.get(id=id)
-    if mentee.user != request.user:
-        raise Http404('You are not authorized to access this page.')
+    # Login check, mentee fetching (into request.mentee), and ownership check handled by decorator
+    mentee = request.mentee # Access mentee from request object
 
-    video = request.FILES.get('video')    
-    video = Upload(
-        video=video,
-        mentee=mentee
+    video_file = request.FILES.get('video') # Renamed variable
+    new_upload = Upload( # Renamed variable
+        video=video_file,
+        mentee=mentee # Use mentee from request
     )
-    video.save()
+    new_upload.save()
     messages.add_message(request, constants.SUCCESS, 'Video uploaded successfully')        
-    return redirect(f'/mentorship/task/{mentee.id}')
+    return redirect(f'/mentorship/task/{mentee.id}') # Use mentee from request
 
+@mentee_token_required # Apply decorator
 def mentee_tasks(request):
-    token = request.COOKIES.get('auth_token')
-
-    if not token:
-        messages.add_message(request, constants.ERROR, 'Please inform your access token.')
-        return redirect('auth_mentee')       
-
-    mentee = validate_token(token)
-
-    if not mentee:
-        messages.add_message(request, constants.ERROR, 'Invalid token')
-        return redirect('auth_mentee')
+    # Token validation and mentee fetching (into request.mentee) handled by decorator
+    mentee = request.mentee # Access mentee from request object
     
     if request.method == 'GET':
-        tasks = Task.objects.filter(mentee=mentee)
-        videos = Upload.objects.filter(mentee=mentee)
+        tasks = Task.objects.filter(mentee=mentee) # Use mentee from request
+        videos = Upload.objects.filter(mentee=mentee) # Use mentee from request
         return render(request, 'mentee_tasks.html', { 'mentee': mentee, 'tasks': tasks, 'videos': videos })
     
 @csrf_exempt
+@task_status_checks_required # Apply the combined decorator
 def task_status(request, id):
-    token = request.COOKIES.get('auth_token')
-
-    if not token:
-        messages.add_message(request, constants.ERROR, 'Please inform your access token.')
-        return redirect('auth_mentee')       
-
-    mentee = validate_token(token)
-
-    if not mentee:
-        messages.add_message(request, constants.ERROR, 'Invalid token')
-        return redirect('auth_mentee')   
+    # All checks (login, token, ownership) and task fetching (into request.task) handled by decorator
+    task = request.task # Access task from request object
     
-    if not request.user.is_authenticated:
-        messages.add_message(request, constants.ERROR, 'Please login to continue.')
-        return redirect('login')
-    
-    task = Task.objects.get(id=id)
     task.done = not task.done
     task.save()
     return HttpResponse('Task status updated successfully')
