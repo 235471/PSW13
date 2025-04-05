@@ -88,11 +88,10 @@ def task_status_checks_required(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, id, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.add_message(request, constants.ERROR, 'Please login to continue.')
-            return redirect('login') 
+        # This view is for the mentee, authenticated via token.
+        # Remove mentor login check.
 
-        # Check token - kept from original view logic
+        # 1. Check token validity
         token = request.COOKIES.get('auth_token')
         if not token:
             messages.add_message(request, constants.ERROR, 'Please inform your access token.')
@@ -103,19 +102,18 @@ def task_status_checks_required(view_func):
             messages.add_message(request, constants.ERROR, 'Invalid token')
             return redirect('auth_mentee')
             
+        # 2. Fetch Task
         try:
             task = Task.objects.get(id=id)
         except Task.DoesNotExist:
             raise Http404('Task not found.')
 
-        if task.mentee.user != request.user:
-            raise Http404('You are not authorized to modify this task.')
-            
-        # Optional check: Does the token belong to the same mentee as the task?
-        # This might be overly strict depending on requirements.
-        # if task.mentee != mentee_from_token:
-        #     raise Http404('Token does not match task mentee.')
+        # 3. Check if the mentee identified by the token owns this task
+        if task.mentee != mentee_from_token:
+             # Using Http404 for security (don't reveal task existence)
+            raise Http404('You are not authorized to modify this task.') 
 
+        # Attach the validated task to the request
         request.task = task
         return view_func(request, id, *args, **kwargs)
     return _wrapped_view

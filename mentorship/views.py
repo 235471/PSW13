@@ -216,7 +216,6 @@ def mentee_tasks(request):
 @task_status_checks_required 
 def task_status(request, id):
     task = request.task # Get task attached by decorator
-    
     task.done = not task.done
     task.save()
     return HttpResponse('Task status updated successfully')
