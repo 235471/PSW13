@@ -1,7 +1,6 @@
 {% extends "base.html" %}
-{# Removed {% load static %} as it's now in base.html #}
+
 {% block 'body' %}
-{# Removed redundant header block #}
  
  
   
@@ -42,7 +41,7 @@
                     <p class="text-sm/6 font-semibold text-indigo-200">Meetings</p>
                     <div class="grid grid-cols-4 gap-5">
                         <div class="col-span-3">
-                          <form action="{% url 'upload' mentee.id %}" method="POST" enctype='multipart/form-data'>{% csrf_token %} {# Corrected: Added .id back #}
+                          <form action="{% url 'upload' mentee.id %}" method="POST" enctype='multipart/form-data'>{% csrf_token %} 
                             <input type="file" name="video" required class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6">
                         </div>
                         <div>
@@ -92,7 +91,7 @@
                 <div class="grid grid-cols-4 gap-5 mt-4">
 
                       <div class="col-span-3">
-                        <form action="{% url 'task' mentee.id %}" method="POST">{% csrf_token %} {# Corrected: Added .id back #}
+                        <form action="{% url 'task' mentee.id %}" method="POST">{% csrf_token %} 
                           <input type="text" name="task" autocomplete="email" required class="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6" placeholder="Tasks...">
                       </div>
                       <div>

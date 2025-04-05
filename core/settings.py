@@ -141,3 +141,5 @@ MESSAGE_TAGS = {
     constants.ERROR: 'bg-red-50 text-red-700'
 }
 
+# Login URL
+LOGIN_URL = 'login'

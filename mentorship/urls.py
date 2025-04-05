@@ -11,4 +11,5 @@ urlpatterns = [
     path('task/<int:id>', views.task, name='task'),
     path('upload/<int:id>', views.upload, name='upload'),
     path('task_status/<int:id>', views.task_status, name='task_status'),
+    path('mentee_logout/', views.mentee_logout, name='mentee_logout'), 
 ]

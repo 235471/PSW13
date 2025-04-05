@@ -3,6 +3,9 @@
 {% block 'body' %}
   <div class="bg-[#040e1b] min-h-screen">
     <div class="max-w-5xl mx-auto py-8">
+      <div class="flex justify-end mb-4"> 
+         <a href="{% url 'mentee_logout' %}" class="text-sm font-semibold leading-6 text-indigo-400 hover:text-indigo-300">Logout</a> 
+      </div>
       <form action="{% url 'schedule_meeting' %}" method="POST">{% csrf_token %}
         <h2 class="mt-4 text-2xl/9 font-bold tracking-tight text-gray-100">Schedule your meeting</h2>
         <label for="email" class="block mt-4 text-sm/6 font-medium text-gray-200">Pick available timeslot</label>

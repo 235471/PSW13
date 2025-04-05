@@ -1,7 +1,6 @@
 {% extends "base.html" %} 
-{# Removed {% load static %} as it's now in base.html #} 
+
 {% block 'body' %}
-{# Removed redundant header block #}
 
 <div class="bg-[#040e1b] min-h-screen">
   <div class="max-w-7xl mx-auto py-12">
@@ -202,7 +201,6 @@
   </div>
 </div>
 
-{# Replace the original script block entirely with the json_script version #}
 {{ stages_flat|json_script:"chart-labels" }}
 {{ stages_count|json_script:"chart-data" }}
 
@@ -211,7 +209,7 @@
 <script>
   const chartLabels = JSON.parse(document.getElementById('chart-labels').textContent);
   const chartDataValues = JSON.parse(document.getElementById('chart-data').textContent);
-  const chartCtx = document.getElementById('myChart'); 
+  const chartCtx = document.getElementById('myChart');
 
   new Chart(chartCtx, {
     type: 'pie',
@@ -221,8 +219,6 @@
         label: 'Mentee Stages',
         data: chartDataValues,
         borderWidth: 1
-        // Optional: Add background colors
-        // backgroundColor: [ '#FF6384', '#36A2EB', '#FFCE56', ... ],
       }]
     },
     options: {

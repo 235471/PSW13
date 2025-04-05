@@ -3,7 +3,10 @@
 {% block 'body' %}
   <div class="bg-[#040e1b] min-h-screen">
     <div class="max-w-7xl mx-auto py-8">
-        <h2 class="mt-4 text-2xl/9 font-bold tracking-tight text-gray-100">Choose a date for your mentorship meeting</h2>
+        <div class="flex justify-between items-center"> 
+            <h2 class="mt-4 text-2xl/9 font-bold tracking-tight text-gray-100">Choose a date for your mentorship meeting</h2>
+            <a href="{% url 'mentee_logout' %}" class="text-sm font-semibold leading-6 text-indigo-400 hover:text-indigo-300">Logout</a> 
+        </div>
         {% if messages %}
             {% for message in messages %}
                 <div class="rounded-md {{message.tags}} mt-4">

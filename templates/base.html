@@ -8,8 +8,7 @@
     {% block 'head' %}{% endblock 'head' %}
 </head>
 <body>
-    {% load static %} {# Added for header logo #}
-    {# Common Header Moved Here #}
+    {% load static %} 
     <header class="bg-slate-900">
         <nav class="flex items-center justify-between p-4 lg:px-8" aria-label="Global">
           <div class="flex lg:flex-1">
@@ -32,7 +31,9 @@
             <a href="{% url 'meeting' %}" class="text-sm/6 font-semibold text-gray-100">Meetings</a>
           </div>
           <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-            {# Add login/logout or user info here if desired #}
+            {% if user.is_authenticated %}
+              <a href="{% url 'logout' %}" class="text-sm/6 font-semibold text-gray-100">Logout <span aria-hidden="true">&rarr;</span></a>
+            {% endif %}
           </div>
         </nav>
     </header>
